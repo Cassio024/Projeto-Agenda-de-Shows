@@ -1,0 +1,30 @@
+name: flutter_application_1
+description: "A new Flutter project."
+publish_to: 'none' 
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0' # É uma boa prática definir um range maior
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  flutter_localizations:
+    sdk: flutter
+
+  sqflite: ^2.3.3+1
+  sqflite_common_ffi: ^2.3.3 # ADICIONE ESTA LINHA
+  path: ^1.9.0
+  table_calendar: ^3.1.2
+  cupertino_icons: ^1.0.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0 # Versão mais recente pode ser 4.0.0 ou 5.0.0
+
+flutter:
+  uses-material-design: true
+
