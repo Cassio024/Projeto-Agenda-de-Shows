@@ -2,32 +2,31 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart'; // Importe o pacote FFI
-import 'dart:io'; // Importe para checar a plataforma
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'dart:io';
 
 import 'screens/login_screen.dart';
 
-Future<void> main() async { // Transforme a função main em async
-  // Inicializa o SQFlite FFI para Desktop (Windows, macOS, Linux)
+Future<void> main() async {
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
   }
   
-  // Garante que todos os bindings do Flutter estejam prontos antes de rodar o app
   WidgetsFlutterBinding.ensureInitialized();
 
-  runApp(const MyApp()); // A chamada para runApp fica aqui
+  runApp(const MyApp());
 }
 
-// A DEFINIÇÃO DA CLASSE ESTÁ AQUI
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Agenda de Eventos',
+      // MUDANÇA AQUI
+      title: 'Agenda Shows e Eventos',
+      
       theme: ThemeData(
         brightness: Brightness.dark,
         scaffoldBackgroundColor: Colors.black,
@@ -84,3 +83,4 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+

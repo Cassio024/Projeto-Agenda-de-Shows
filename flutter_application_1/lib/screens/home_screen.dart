@@ -6,13 +6,10 @@ import '../models/user_model.dart';
 import '../services/database_service.dart';
 import '../models/event_model.dart';
 import 'add_edit_event_screen.dart';
-import 'change_password_screen.dart';
 import 'login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  // MUDANÇA: Recebe o usuário que fez login
   final User user;
-
   const HomeScreen({super.key, required this.user});
 
   @override
@@ -99,21 +96,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Olá, ${widget.user.name}'), // Mostra o nome do usuário
+        title: Text('Olá, ${widget.user.name}'),
         actions: [
-          // NOVO BOTÃO: Botão para alterar senha
-          IconButton(
-            icon: const Icon(Icons.password),
-            tooltip: 'Alterar Senha',
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  // Navega para a tela de alterar senha, passando o ID do usuário
-                  builder: (context) => ChangePasswordScreen(userId: widget.user.id!),
-                ),
-              );
-            },
-          ),
+          // BOTÃO DE ALTERAR SENHA REMOVIDO DAQUI
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Sair',

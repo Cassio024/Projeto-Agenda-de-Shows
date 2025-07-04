@@ -19,7 +19,7 @@ class DatabaseService {
   Future<Database> _initDB(String filePath) async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
-    return await openDatabase(path, version: 2, onCreate: _createDB, onUpgrade: _onUpgrade);
+    return await openDatabase(path, version: 3, onCreate: _createDB, onUpgrade: _onUpgrade);
   }
 
   Future<void> _createDB(Database db, int version) async {
@@ -30,6 +30,10 @@ class DatabaseService {
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
       await _createUsersTable(db);
+    }
+    if (oldVersion < 3) {
+      // Adiciona a coluna com um valor padrão válido para utilizadores antigos
+      await db.execute('ALTER TABLE users ADD COLUMN birthDate TEXT NOT NULL DEFAULT "1970-01-01T00:00:00.000Z"');
     }
   }
 
@@ -56,7 +60,8 @@ class DatabaseService {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         email TEXT NOT NULL UNIQUE,
-        password TEXT NOT NULL
+        password TEXT NOT NULL,
+        birthDate TEXT NOT NULL
       )
     ''');
   }
@@ -73,19 +78,53 @@ class DatabaseService {
     final db = await instance.database;
     final maps = await db.query(
       'users',
-      columns: ['id', 'name', 'email', 'password'],
       where: 'email = ? AND password = ?',
       whereArgs: [email, password],
     );
+    if (maps.isNotEmpty) return User.fromMap(maps.first);
+    return null;
+  }
+  
+  Future<User?> getUserByEmailAndBirthDate(String email, DateTime birthDate) async {
+    final db = await instance.database;
+    final birthDateString = birthDate.toIso8601String().split('T').first;
+    final maps = await db.query(
+      'users',
+      where: 'email = ?',
+      whereArgs: [email],
+    );
 
-    if (maps.isNotEmpty) {
-      return User.fromMap(maps.first);
+    for (var map in maps) {
+      if (User.fromMap(map).birthDate.toIso8601String().split('T').first == birthDateString) {
+        return User.fromMap(map);
+      }
+    }
+    return null;
+  }
+
+  // FUNÇÃO RESTAURADA: Para um utilizador logado alterar a sua senha
+  Future<bool> updatePassword(int userId, String oldPassword, String newPassword) async {
+    final db = await instance.database;
+    final result = await db.query(
+      'users',
+      where: 'id = ? AND password = ?',
+      whereArgs: [userId, oldPassword],
+    );
+
+    if (result.isNotEmpty) {
+      final updateCount = await db.update(
+        'users',
+        {'password': newPassword},
+        where: 'id = ?',
+        whereArgs: [userId],
+      );
+      return updateCount > 0;
     } else {
-      return null;
+      return false;
     }
   }
 
-  Future<bool> updatePassword(int userId, String newPassword) async {
+  Future<bool> resetPassword(int userId, String newPassword) async {
     final db = await instance.database;
     final result = await db.update(
       'users',
@@ -112,10 +151,6 @@ class DatabaseService {
 
   Future<int> deleteEvent(int id) async {
     final db = await instance.database;
-    return await db.delete(
-      'events',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return await db.delete('events', where: 'id = ?', whereArgs: [id]);
   }
 }

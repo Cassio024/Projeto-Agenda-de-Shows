@@ -1,6 +1,9 @@
 // lib/screens/forgot_password_screen.dart
 
 import 'package:flutter/material.dart';
+// IMPORT ADICIONADO AQUI
+import '../services/database_service.dart';
+import 'reset_password_screen.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({Key? key}) : super(key: key);
@@ -12,6 +15,7 @@ class ForgotPasswordScreen extends StatefulWidget {
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
+  DateTime? _birthDate;
   bool _isLoading = false;
 
   @override
@@ -20,24 +24,50 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     super.dispose();
   }
 
-  Future<void> _sendRecoveryLink() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
-      
-      // Simula uma chamada de API
-      await Future.delayed(const Duration(seconds: 2));
+  Future<void> _pickBirthDate() async {
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: _birthDate ?? DateTime.now().subtract(const Duration(days: 365 * 18)),
+      firstDate: DateTime(1920),
+      lastDate: DateTime.now(),
+    );
+    if (pickedDate != null && pickedDate != _birthDate) {
+      setState(() {
+        _birthDate = pickedDate;
+      });
+    }
+  }
 
-      // Em um app real, aqui você chamaria uma API (ex: Firebase) para enviar o email.
-      // Por enquanto, apenas mostramos uma mensagem de sucesso.
-      
-      if (mounted) {
+  Future<void> _verifyIdentity() async {
+    if (_formKey.currentState!.validate()) {
+      if (_birthDate == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Se o email estiver cadastrado, um link de recuperação foi enviado.'),
-            backgroundColor: Colors.green,
-          ),
+          const SnackBar(content: Text('Por favor, selecione sua data de nascimento.')),
         );
-        Navigator.of(context).pop();
+        return;
+      }
+
+      setState(() => _isLoading = true);
+
+      final user = await DatabaseService.instance.getUserByEmailAndBirthDate(
+        _emailController.text.trim(),
+        _birthDate!,
+      );
+
+      if (mounted) {
+        if (user != null) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => ResetPasswordScreen(userId: user.id!)),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Dados não encontrados. Verifique o email e a data de nascimento.')),
+          );
+        }
+      }
+
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
     }
   }
@@ -60,7 +90,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Text(
-                  'Insira o seu email cadastrado para receber um link de recuperação de senha.',
+                  'Insira seu email e data de nascimento para redefinir sua senha.',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.white70),
                 ),
@@ -69,22 +99,37 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   controller: _emailController,
                   decoration: const InputDecoration(labelText: 'Email'),
                   keyboardType: TextInputType.emailAddress,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Por favor, insira seu email';
-                    }
-                    if (!value.contains('@')) {
-                      return 'Por favor, insira um email válido';
-                    }
-                    return null;
-                  },
+                  validator: (value) => (value == null || value.trim().isEmpty) ? 'Por favor, insira seu email' : null,
+                ),
+                const SizedBox(height: 16),
+                InkWell(
+                  onTap: _pickBirthDate,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          _birthDate == null
+                              ? 'Data de Nascimento'
+                              : '${_birthDate!.day}/${_birthDate!.month}/${_birthDate!.year}',
+                          style: TextStyle(fontSize: 16, color: _birthDate == null ? Colors.white70 : Colors.white),
+                        ),
+                        const Icon(Icons.calendar_today, color: Colors.white70),
+                      ],
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 32),
                 ElevatedButton(
-                  onPressed: _isLoading ? null : _sendRecoveryLink,
+                  onPressed: _isLoading ? null : _verifyIdentity,
                   child: _isLoading
                       ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                      : const Text('Enviar Link'),
+                      : const Text('Verificar'),
                 ),
               ],
             ),

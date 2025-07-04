@@ -17,6 +17,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  DateTime? _birthDate; // NOVO CAMPO
   bool _isLoading = false;
 
   @override
@@ -28,19 +29,40 @@ class _SignUpScreenState extends State<SignUpScreen> {
     super.dispose();
   }
 
+  Future<void> _pickBirthDate() async {
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: _birthDate ?? DateTime.now().subtract(const Duration(days: 365 * 18)),
+      firstDate: DateTime(1920),
+      lastDate: DateTime.now(),
+    );
+    if (pickedDate != null && pickedDate != _birthDate) {
+      setState(() {
+        _birthDate = pickedDate;
+      });
+    }
+  }
+
   Future<void> _signUp() async {
     if (_formKey.currentState!.validate()) {
+      if (_birthDate == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Por favor, selecione sua data de nascimento.')),
+        );
+        return;
+      }
+
       setState(() => _isLoading = true);
       
       final newUser = User(
         name: _nameController.text,
         email: _emailController.text,
-        password: _passwordController.text, // Em um app real, a senha deve ser criptografada!
+        password: _passwordController.text,
+        birthDate: _birthDate!,
       );
 
       try {
         await DatabaseService.instance.createUser(newUser);
-        
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Conta criada com sucesso! Faça o login.')),
@@ -48,9 +70,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
           Navigator.of(context).pop();
         }
       } catch (e) {
-        // O erro mais comum aqui é de email duplicado (UNIQUE constraint)
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Não foi possível criar a conta. O email já pode estar em uso.')),
+          const SnackBar(content: Text('Não foi possível criar a conta. O email já pode estar em uso.')),
         );
       } finally {
         if (mounted) {
@@ -81,6 +102,30 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   controller: _nameController,
                   decoration: const InputDecoration(labelText: 'Nome Completo'),
                   validator: (value) => value!.isEmpty ? 'Por favor, insira seu nome' : null,
+                ),
+                const SizedBox(height: 16),
+                // NOVO CAMPO DE DATA
+                InkWell(
+                  onTap: _pickBirthDate,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          _birthDate == null
+                              ? 'Data de Nascimento'
+                              : '${_birthDate!.day}/${_birthDate!.month}/${_birthDate!.year}',
+                          style: TextStyle(fontSize: 16, color: _birthDate == null ? Colors.white70 : Colors.white),
+                        ),
+                        const Icon(Icons.calendar_today, color: Colors.white70),
+                      ],
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 TextFormField(

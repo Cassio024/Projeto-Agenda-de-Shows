@@ -1,39 +1,36 @@
-// lib/screens/change_password_screen.dart
+// lib/screens/reset_password_screen.dart
 
 import 'package:flutter/material.dart';
 import '../services/database_service.dart';
+import 'login_screen.dart';
 
-class ChangePasswordScreen extends StatefulWidget {
+class ResetPasswordScreen extends StatefulWidget {
   final int userId;
-
-  const ChangePasswordScreen({Key? key, required this.userId}) : super(key: key);
+  const ResetPasswordScreen({Key? key, required this.userId}) : super(key: key);
 
   @override
-  State<ChangePasswordScreen> createState() => _ChangePasswordScreenState();
+  State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
 }
 
-class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
+class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _oldPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
 
   @override
   void dispose() {
-    _oldPasswordController.dispose();
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  Future<void> _changePassword() async {
+  Future<void> _resetPassword() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
-      final success = await DatabaseService.instance.updatePassword(
+      final success = await DatabaseService.instance.resetPassword(
         widget.userId,
-        _oldPasswordController.text,
         _newPasswordController.text,
       );
 
@@ -41,20 +38,20 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         if (success) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Senha alterada com sucesso!'),
+              content: Text('Senha redefinida com sucesso! Faça o login.'),
               backgroundColor: Colors.green,
             ),
           );
-          Navigator.of(context).pop();
+          // Volta para a tela de login após redefinir
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
+            (route) => false,
+          );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('A senha atual está incorreta. Tente novamente.'),
-              backgroundColor: Colors.redAccent,
-            ),
+            const SnackBar(content: Text('Ocorreu um erro ao redefinir a senha.')),
           );
         }
-        setState(() => _isLoading = false);
       }
     }
   }
@@ -63,7 +60,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Alterar Senha'),
+        title: const Text('Redefinir Senha'),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(32.0),
@@ -72,11 +69,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              TextFormField(
-                controller: _oldPasswordController,
-                decoration: const InputDecoration(labelText: 'Senha Atual'),
-                obscureText: true,
-                validator: (value) => value!.isEmpty ? 'Por favor, insira sua senha atual' : null,
+              const Text(
+                'Crie uma nova senha para sua conta.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white70),
               ),
               const SizedBox(height: 24),
               TextFormField(
@@ -101,7 +97,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               ),
               const SizedBox(height: 32),
               ElevatedButton(
-                onPressed: _isLoading ? null : _changePassword,
+                onPressed: _isLoading ? null : _resetPassword,
                 child: _isLoading
                     ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
                     : const Text('Salvar Nova Senha'),
