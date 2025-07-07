@@ -31,19 +31,29 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       lastDate: DateTime.now(),
     );
     if (pickedDate != null && pickedDate != _birthDate) {
-      setState(() => _birthDate = pickedDate);
+      setState(() {
+        _birthDate = pickedDate;
+      });
     }
   }
 
   Future<void> _verifyIdentity() async {
     if (_formKey.currentState!.validate()) {
       if (_birthDate == null) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Por favor, selecione a sua data de nascimento.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Por favor, selecione a sua data de nascimento.')),
+        );
         return;
       }
+
       setState(() => _isLoading = true);
+
       try {
-        final result = await ApiService.verifyIdentity(_emailController.text.trim(), _birthDate!);
+        final result = await ApiService.verifyIdentity(
+          _emailController.text.trim(),
+          _birthDate!,
+        );
+        
         final userId = result['userId'];
         if (mounted && userId != null) {
           Navigator.of(context).pushReplacement(
@@ -52,10 +62,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+          );
         }
       } finally {
-        if (mounted) setState(() => _isLoading = false);
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
       }
     }
   }
@@ -113,7 +127,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 const SizedBox(height: 32),
                 ElevatedButton(
                   onPressed: _isLoading ? null : _verifyIdentity,
-                  child: _isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black)) : const Text('Verificar'),
+                  child: _isLoading
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                      : const Text('Verificar'),
                 ),
               ],
             ),

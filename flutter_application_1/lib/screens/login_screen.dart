@@ -1,12 +1,15 @@
 // lib/screens/login_screen.dart
+
 import 'package:flutter/material.dart';
 import '../models/user_model.dart';
 import '../services/api_service.dart';
 import 'home_screen.dart';
-import 'signup_screen.dart'; // Adicione outros imports se necessário
+import 'signup_screen.dart';
+import 'forgot_password_screen.dart'; // Importa a nova tela
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
+
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
@@ -39,9 +42,11 @@ class _LoginScreenState extends State<LoginScreen> {
           );
         }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+          );
+        }
       } finally {
         if (mounted) setState(() => _isLoading = false);
       }
@@ -86,16 +91,29 @@ class _LoginScreenState extends State<LoginScreen> {
                   onPressed: _isLoading ? null : _login,
                   child: _isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black)) : const Text('Entrar'),
                 ),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (context) => const SignUpScreen()),
-                    );
-                  },
-                  child: const Text('Não tem uma conta? Crie uma'),
-                  style: TextButton.styleFrom(foregroundColor: Colors.white70),
-                )
+                const SizedBox(height: 8),
+                Column(
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (context) => const ForgotPasswordScreen()),
+                        );
+                      },
+                      child: const Text('Esqueceu a senha?'),
+                      style: TextButton.styleFrom(foregroundColor: Colors.white70),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (context) => const SignUpScreen()),
+                        );
+                      },
+                      child: const Text('Não tem uma conta? Crie uma'),
+                      style: TextButton.styleFrom(foregroundColor: Colors.white70),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
