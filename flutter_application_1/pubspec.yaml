@@ -14,10 +14,11 @@ dependencies:
   flutter_localizations:
     sdk: flutter
 
-  sqflite: ^2.3.3+1
-  sqflite_common_ffi: ^2.3.3 # ADICIONE ESTA LINHA
-  path: ^1.9.0
+  # Pacotes necessários para a nova arquitetura
+  http: ^1.2.1
   table_calendar: ^3.1.2
+  
+  # Pacotes de ícones e outros
   cupertino_icons: ^1.0.2
 
 dev_dependencies:

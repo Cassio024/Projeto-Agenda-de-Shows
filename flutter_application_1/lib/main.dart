@@ -2,19 +2,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'dart:io';
-
 import 'screens/login_screen.dart';
 
-Future<void> main() async {
-  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-    sqfliteFfiInit();
-    databaseFactory = databaseFactoryFfi;
-  }
-  
-  WidgetsFlutterBinding.ensureInitialized();
-
+void main() {
+  // A inicialização do FFI e do WidgetsFlutterBinding já não é necessária aqui
+  // para a nossa nova arquitetura de API.
   runApp(const MyApp());
 }
 
@@ -24,9 +16,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      // MUDANÇA AQUI
       title: 'Agenda Shows e Eventos',
-      
       theme: ThemeData(
         brightness: Brightness.dark,
         scaffoldBackgroundColor: Colors.black,
@@ -83,4 +73,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-

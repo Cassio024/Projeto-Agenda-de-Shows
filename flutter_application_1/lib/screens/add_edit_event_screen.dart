@@ -1,29 +1,20 @@
 // lib/screens/add_edit_event_screen.dart
-
 import 'package:flutter/material.dart';
-import '../models/event_model.dart';
-import '../services/database_service.dart';
+import '../services/api_service.dart';
 
 class AddEditEventScreen extends StatefulWidget {
-  const AddEditEventScreen({Key? key}) : super(key: key);
-
+  final String userId;
+  const AddEditEventScreen({Key? key, required this.userId}) : super(key: key);
   @override
-  _AddEditEventScreenState createState() => _AddEditEventScreenState();
+  State<AddEditEventScreen> createState() => _AddEditEventScreenState();
 }
 
 class _AddEditEventScreenState extends State<AddEditEventScreen> {
   final _formKey = GlobalKey<FormState>();
-  late TextEditingController _eventNameController;
-  late TextEditingController _venueController;
+  final _eventNameController = TextEditingController();
+  final _venueController = TextEditingController();
   DateTime? _selectedDate;
-
-  @override
-  void initState() {
-    super.initState();
-    _eventNameController = TextEditingController();
-    _venueController = TextEditingController();
-    _selectedDate = DateTime.now(); // Inicia com a data atual
-  }
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -60,26 +51,31 @@ class _AddEditEventScreenState extends State<AddEditEventScreen> {
 
   Future<void> _saveEvent() async {
     if (_formKey.currentState!.validate()) {
-      final newEvent = Event(
-        eventName: _eventNameController.text,
-        venue: _venueController.text,
-        dateTime: _selectedDate!,
-      );
-
-      await DatabaseService.instance.createEvent(newEvent);
-
-      // Volta para a tela anterior
-      Navigator.of(context).pop();
+      if (_selectedDate == null) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Por favor, selecione uma data.')));
+        return;
+      }
+      setState(() => _isLoading = true);
+      try {
+        await ApiService.createEvent(
+          widget.userId,
+          _eventNameController.text,
+          _venueController.text,
+          _selectedDate!,
+        );
+        if (mounted) Navigator.of(context).pop();
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))));
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Adicionar Novo Evento'),
-        backgroundColor: Colors.indigo,
-      ),
+      appBar: AppBar(title: const Text('Adicionar Evento')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -89,32 +85,40 @@ class _AddEditEventScreenState extends State<AddEditEventScreen> {
             children: [
               TextFormField(
                 controller: _eventNameController,
-                decoration: InputDecoration(labelText: 'Nome do Evento/Artista'),
-                validator: (value) =>
-                    value!.isEmpty ? 'Por favor, insira um nome' : null,
+                decoration: const InputDecoration(labelText: 'Nome do Evento/Artista'),
+                validator: (value) => value!.isEmpty ? 'Por favor, insira um nome' : null,
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _venueController,
-                decoration: InputDecoration(labelText: 'Local do Show'),
-                validator: (value) =>
-                    value!.isEmpty ? 'Por favor, insira um local' : null,
+                decoration: const InputDecoration(labelText: 'Local do Show'),
+                validator: (value) => value!.isEmpty ? 'Por favor, insira um local' : null,
               ),
-              SizedBox(height: 16),
-              ListTile(
-                title: Text('Data e Hora do Evento'),
-                subtitle: Text('${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year} às ${_selectedDate!.hour.toString().padLeft(2, '0')}:${_selectedDate!.minute.toString().padLeft(2, '0')}'),
-                trailing: Icon(Icons.calendar_today),
+              const SizedBox(height: 16),
+              InkWell(
                 onTap: () => _pickDate(context),
-              ),
-              SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: _saveEvent,
-                child: Text('Salvar Evento'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.indigo,
-                  padding: EdgeInsets.symmetric(vertical: 16),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _selectedDate == null ? 'Data e Hora do Evento' : '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year} às ${_selectedDate!.hour.toString().padLeft(2, '0')}:${_selectedDate!.minute.toString().padLeft(2, '0')}',
+                        style: TextStyle(fontSize: 16, color: _selectedDate == null ? Colors.white70 : Colors.white),
+                      ),
+                      const Icon(Icons.calendar_today, color: Colors.white70),
+                    ],
+                  ),
                 ),
+              ),
+              const SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: _isLoading ? null : _saveEvent,
+                child: _isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black)) : const Text('Salvar Evento'),
               ),
             ],
           ),

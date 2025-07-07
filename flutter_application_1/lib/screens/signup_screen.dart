@@ -1,12 +1,9 @@
 // lib/screens/signup_screen.dart
-
 import 'package:flutter/material.dart';
-import '../models/user_model.dart';
-import '../services/database_service.dart';
+import '../services/api_service.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({Key? key}) : super(key: key);
-
   @override
   State<SignUpScreen> createState() => _SignUpScreenState();
 }
@@ -17,7 +14,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  DateTime? _birthDate; // NOVO CAMPO
+  DateTime? _birthDate;
   bool _isLoading = false;
 
   @override
@@ -37,46 +34,36 @@ class _SignUpScreenState extends State<SignUpScreen> {
       lastDate: DateTime.now(),
     );
     if (pickedDate != null && pickedDate != _birthDate) {
-      setState(() {
-        _birthDate = pickedDate;
-      });
+      setState(() => _birthDate = pickedDate);
     }
   }
 
   Future<void> _signUp() async {
     if (_formKey.currentState!.validate()) {
       if (_birthDate == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Por favor, selecione sua data de nascimento.')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Por favor, selecione a sua data de nascimento.')));
         return;
       }
-
       setState(() => _isLoading = true);
-      
-      final newUser = User(
-        name: _nameController.text,
-        email: _emailController.text,
-        password: _passwordController.text,
-        birthDate: _birthDate!,
-      );
-
       try {
-        await DatabaseService.instance.createUser(newUser);
+        await ApiService.registerUser(
+          _nameController.text,
+          _emailController.text,
+          _passwordController.text,
+          _birthDate!,
+        );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Conta criada com sucesso! Faça o login.')),
+            const SnackBar(content: Text('Conta criada com sucesso! Por favor, faça o login.')),
           );
           Navigator.of(context).pop();
         }
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Não foi possível criar a conta. O email já pode estar em uso.')),
+          SnackBar(content: Text('Erro ao criar conta: ${e.toString()}')),
         );
       } finally {
-        if (mounted) {
-          setState(() => _isLoading = false);
-        }
+        if (mounted) setState(() => _isLoading = false);
       }
     }
   }
@@ -101,10 +88,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 TextFormField(
                   controller: _nameController,
                   decoration: const InputDecoration(labelText: 'Nome Completo'),
-                  validator: (value) => value!.isEmpty ? 'Por favor, insira seu nome' : null,
+                  validator: (value) => value!.isEmpty ? 'Por favor, insira o seu nome' : null,
                 ),
                 const SizedBox(height: 16),
-                // NOVO CAMPO DE DATA
                 InkWell(
                   onTap: _pickBirthDate,
                   child: Container(
@@ -117,9 +103,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          _birthDate == null
-                              ? 'Data de Nascimento'
-                              : '${_birthDate!.day}/${_birthDate!.month}/${_birthDate!.year}',
+                          _birthDate == null ? 'Data de Nascimento' : '${_birthDate!.day}/${_birthDate!.month}/${_birthDate!.year}',
                           style: TextStyle(fontSize: 16, color: _birthDate == null ? Colors.white70 : Colors.white),
                         ),
                         const Icon(Icons.calendar_today, color: Colors.white70),
@@ -133,7 +117,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   decoration: const InputDecoration(labelText: 'Email'),
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
-                    if (value == null || value.isEmpty) return 'Por favor, insira seu email';
+                    if (value == null || value.isEmpty) return 'Por favor, insira o seu email';
                     if (!value.contains('@')) return 'Email inválido';
                     return null;
                   },
@@ -162,9 +146,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 const SizedBox(height: 32),
                 ElevatedButton(
                   onPressed: _isLoading ? null : _signUp,
-                  child: _isLoading 
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                      : const Text('Criar Conta'),
+                  child: _isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black)) : const Text('Criar Conta'),
                 ),
               ],
             ),

@@ -1,11 +1,11 @@
 // lib/screens/reset_password_screen.dart
 
 import 'package:flutter/material.dart';
-import '../services/database_service.dart';
+import '../services/api_service.dart';
 import 'login_screen.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
-  final int userId;
+  final String userId;
   const ResetPasswordScreen({Key? key, required this.userId}) : super(key: key);
 
   @override
@@ -29,28 +29,33 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
-      final success = await DatabaseService.instance.resetPassword(
-        widget.userId,
-        _newPasswordController.text,
-      );
+      try {
+        await ApiService.resetPassword(
+          widget.userId,
+          _newPasswordController.text,
+        );
 
-      if (mounted) {
-        if (success) {
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Senha redefinida com sucesso! Faça o login.'),
               backgroundColor: Colors.green,
             ),
           );
-          // Volta para a tela de login após redefinir
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (context) => const LoginScreen()),
             (route) => false,
           );
-        } else {
+        }
+      } catch (e) {
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Ocorreu um erro ao redefinir a senha.')),
+            SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
           );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
         }
       }
     }
@@ -70,7 +75,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Text(
-                'Crie uma nova senha para sua conta.',
+                'Crie uma nova senha para a sua conta.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.white70),
               ),

@@ -1,37 +1,18 @@
 // lib/models/user_model.dart
-
 class User {
-  int? id;
-  String name;
-  String email;
-  String password;
-  DateTime birthDate; // NOVO CAMPO
+  final String id;
+  final String name;
+  final String email;
 
-  User({
-    this.id,
-    required this.name,
-    required this.email,
-    required this.password,
-    required this.birthDate, // NOVO CAMPO
-  });
+  User({required this.id, required this.name, required this.email});
 
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'name': name,
-      'email': email,
-      'password': password,
-      'birthDate': birthDate.toIso8601String(), // NOVO CAMPO
-    };
-  }
-
-  factory User.fromMap(Map<String, dynamic> map) {
+  // Construtor para criar um User a partir do JSON da API
+  factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      id: map['id'],
-      name: map['name'],
-      email: map['email'],
-      password: map['password'],
-      birthDate: DateTime.parse(map['birthDate']), // NOVO CAMPO
+      id: json['id'],
+      name: json['name'],
+      email: json['email'],
     );
   }
 }
+

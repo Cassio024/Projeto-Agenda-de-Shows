@@ -1,8 +1,7 @@
 // lib/screens/forgot_password_screen.dart
 
 import 'package:flutter/material.dart';
-// IMPORT ADICIONADO AQUI
-import '../services/database_service.dart';
+import '../services/api_service.dart';
 import 'reset_password_screen.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
@@ -32,42 +31,31 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       lastDate: DateTime.now(),
     );
     if (pickedDate != null && pickedDate != _birthDate) {
-      setState(() {
-        _birthDate = pickedDate;
-      });
+      setState(() => _birthDate = pickedDate);
     }
   }
 
   Future<void> _verifyIdentity() async {
     if (_formKey.currentState!.validate()) {
       if (_birthDate == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Por favor, selecione sua data de nascimento.')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Por favor, selecione a sua data de nascimento.')));
         return;
       }
-
       setState(() => _isLoading = true);
-
-      final user = await DatabaseService.instance.getUserByEmailAndBirthDate(
-        _emailController.text.trim(),
-        _birthDate!,
-      );
-
-      if (mounted) {
-        if (user != null) {
+      try {
+        final result = await ApiService.verifyIdentity(_emailController.text.trim(), _birthDate!);
+        final userId = result['userId'];
+        if (mounted && userId != null) {
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => ResetPasswordScreen(userId: user.id!)),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Dados não encontrados. Verifique o email e a data de nascimento.')),
+            MaterialPageRoute(builder: (context) => ResetPasswordScreen(userId: userId)),
           );
         }
-      }
-
-      if (mounted) {
-        setState(() => _isLoading = false);
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))));
+        }
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
       }
     }
   }
@@ -90,7 +78,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Text(
-                  'Insira seu email e data de nascimento para redefinir sua senha.',
+                  'Insira o seu email e data de nascimento para redefinir a sua senha.',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.white70),
                 ),
@@ -99,7 +87,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   controller: _emailController,
                   decoration: const InputDecoration(labelText: 'Email'),
                   keyboardType: TextInputType.emailAddress,
-                  validator: (value) => (value == null || value.trim().isEmpty) ? 'Por favor, insira seu email' : null,
+                  validator: (value) => (value == null || value.trim().isEmpty) ? 'Por favor, insira o seu email' : null,
                 ),
                 const SizedBox(height: 16),
                 InkWell(
@@ -114,9 +102,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          _birthDate == null
-                              ? 'Data de Nascimento'
-                              : '${_birthDate!.day}/${_birthDate!.month}/${_birthDate!.year}',
+                          _birthDate == null ? 'Data de Nascimento' : '${_birthDate!.day}/${_birthDate!.month}/${_birthDate!.year}',
                           style: TextStyle(fontSize: 16, color: _birthDate == null ? Colors.white70 : Colors.white),
                         ),
                         const Icon(Icons.calendar_today, color: Colors.white70),
@@ -127,9 +113,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 const SizedBox(height: 32),
                 ElevatedButton(
                   onPressed: _isLoading ? null : _verifyIdentity,
-                  child: _isLoading
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                      : const Text('Verificar'),
+                  child: _isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black)) : const Text('Verificar'),
                 ),
               ],
             ),

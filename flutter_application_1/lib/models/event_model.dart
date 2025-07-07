@@ -1,57 +1,27 @@
 // lib/models/event_model.dart
-
 class Event {
-  int? id;
-  String eventName;
-  String venue;
-  String? address;
-  DateTime dateTime;
-  double? price;
-  String status;
-  String? contactName;
-  String? contactPhone;
-  String? notes;
+  final String id;
+  final String userId;
+  final String eventName;
+  final String venue;
+  final DateTime dateTime;
 
   Event({
-    this.id,
+    required this.id,
+    required this.userId,
     required this.eventName,
     required this.venue,
-    this.address,
     required this.dateTime,
-    this.price,
-    this.status = 'Confirmado',
-    this.contactName,
-    this.contactPhone,
-    this.notes,
   });
 
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'eventName': eventName,
-      'venue': venue,
-      'address': address,
-      'dateTime': dateTime.toIso8601String(),
-      'price': price,
-      'status': status,
-      'contactName': contactName,
-      'contactPhone': contactPhone,
-      'notes': notes,
-    };
-  }
-
-  factory Event.fromMap(Map<String, dynamic> map) {
+  // Construtor para criar um Event a partir do JSON da API
+  factory Event.fromJson(Map<String, dynamic> json) {
     return Event(
-      id: map['id'],
-      eventName: map['eventName'],
-      venue: map['venue'],
-      address: map['address'],
-      dateTime: DateTime.parse(map['dateTime']),
-      price: map['price'],
-      status: map['status'],
-      contactName: map['contactName'],
-      contactPhone: map['contactPhone'],
-      notes: map['notes'],
+      id: json['_id'], // MongoDB usa _id
+      userId: json['userId'],
+      eventName: json['eventName'],
+      venue: json['venue'],
+      dateTime: DateTime.parse(json['dateTime']),
     );
   }
 }
