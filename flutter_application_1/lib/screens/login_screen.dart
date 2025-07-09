@@ -5,7 +5,7 @@ import '../models/user_model.dart';
 import '../services/api_service.dart';
 import 'home_screen.dart';
 import 'signup_screen.dart';
-import 'forgot_password_screen.dart'; // Importa a nova tela
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -19,6 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _isPasswordVisible = false; // Estado para controlar a visibilidade da senha
 
   @override
   void dispose() {
@@ -80,12 +81,30 @@ class _LoginScreenState extends State<LoginScreen> {
                   validator: (value) => value!.trim().isEmpty ? 'Por favor, insira o seu email' : null,
                 ),
                 const SizedBox(height: 16),
+                // ===== INÍCIO DA ALTERAÇÃO =====
                 TextFormField(
                   controller: _passwordController,
-                  decoration: const InputDecoration(labelText: 'Senha'),
-                  obscureText: true,
+                  obscureText: !_isPasswordVisible, // Usa o estado para esconder/mostrar
+                  decoration: InputDecoration(
+                    labelText: 'Senha',
+                    // Adiciona o ícone no final do campo
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        // Muda o ícone baseado na visibilidade
+                        _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                        color: Colors.white70,
+                      ),
+                      onPressed: () {
+                        // Inverte o estado da visibilidade ao clicar
+                        setState(() {
+                          _isPasswordVisible = !_isPasswordVisible;
+                        });
+                      },
+                    ),
+                  ),
                   validator: (value) => value!.isEmpty ? 'Por favor, insira a sua senha' : null,
                 ),
+                // ===== FIM DA ALTERAÇÃO =====
                 const SizedBox(height: 32),
                 ElevatedButton(
                   onPressed: _isLoading ? null : _login,

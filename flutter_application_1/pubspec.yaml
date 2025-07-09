@@ -5,7 +5,7 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.0.0 <4.0.0' # É uma boa prática definir um range maior
+  sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
   flutter:
@@ -24,7 +24,16 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^4.0.0 # Versão mais recente pode ser 4.0.0 ou 5.0.0
+  flutter_lints: ^4.0.0
+  # Dependência adicionada para gerar os ícones
+  flutter_launcher_icons: ^0.13.1
+
+# Configuração para o pacote de ícones
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icon.png"
+  min_sdk_android: 21
 
 flutter:
   uses-material-design: true
