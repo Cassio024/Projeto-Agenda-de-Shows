@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  // IMPORTANTE: Verifique se esta URL está correta!
+  // ENDEREÇO PÚBLICO E FINAL DO SEU SERVIDOR
   static const String _baseUrl = 'https://agenda-backend-api-4es1.onrender.com/api';
 
   // --- Funções de Utilizador ---
@@ -19,7 +19,11 @@ class ApiService {
         'birthDate': birthDate.toIso8601String(),
       }),
     );
-    return jsonDecode(response.body);
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception(jsonDecode(response.body)['message'] ?? 'Falha ao registar');
+    }
   }
 
   static Future<Map<String, dynamic>> loginUser(String email, String password) async {
@@ -28,7 +32,7 @@ class ApiService {
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'email': email, 'password': password}),
     );
-    
+
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
@@ -45,8 +49,11 @@ class ApiService {
         'birthDate': birthDate.toIso8601String(),
       }),
     );
-    if (response.statusCode == 200) return jsonDecode(response.body);
-    throw Exception(jsonDecode(response.body)['message'] ?? 'Falha na verificação');
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception(jsonDecode(response.body)['message'] ?? 'Falha na verificação');
+    }
   }
 
   static Future<void> resetPassword(String userId, String newPassword) async {
@@ -55,7 +62,9 @@ class ApiService {
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'userId': userId, 'newPassword': newPassword}),
     );
-    if (response.statusCode != 200) throw Exception(jsonDecode(response.body)['message'] ?? 'Falha ao redefinir a senha');
+    if (response.statusCode != 200) {
+      throw Exception(jsonDecode(response.body)['message'] ?? 'Falha ao redefinir a senha');
+    }
   }
 
   // --- Funções de Eventos ---
