@@ -1,28 +1,29 @@
+# --- Etapa de Construção (Build Stage) ---
 # Usa uma imagem oficial que já tem o Flutter SDK
-FROM cirrusci/flutter:stable
+FROM cirrusci/flutter:stable AS build
 
 # Cria uma pasta para o aplicativo dentro do contentor
 WORKDIR /app
 
-# Copia os ficheiros de configuração primeiro
-COPY pubspec.yaml .
-COPY pubspec.lock .
-
-# Baixa as dependências do Flutter
+# Copia os ficheiros de configuração primeiro para otimizar o cache
+COPY pubspec.yaml pubspec.lock ./
 RUN flutter pub get
 
 # Copia o resto do código do aplicativo
 COPY . .
 
-# Constrói a versão web do aplicativo
-RUN flutter build web
+# Constrói a versão web otimizada do aplicativo
+RUN flutter build web --release
 
-# --- Etapa de Servidor ---
+# --- Etapa de Servidor (Serve Stage) ---
 # Agora, usamos uma imagem leve com um servidor web (nginx)
 FROM nginx:alpine
 
 # Copia os ficheiros da web que foram construídos na etapa anterior
-COPY --from=0 /app/build/web /usr/share/nginx/html
+COPY --from=build /app/build/web /usr/share/nginx/html
+
+# Copia o nosso ficheiro de configuração personalizado para o Nginx
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Expõe a porta 80 para o tráfego web
 EXPOSE 80
