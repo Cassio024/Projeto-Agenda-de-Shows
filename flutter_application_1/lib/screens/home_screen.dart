@@ -1,13 +1,11 @@
 // lib/screens/home_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../models/user_model.dart';
 import '../models/event_model.dart';
 import '../services/api_service.dart';
 import 'add_edit_event_screen.dart';
-import 'login_screen.dart';
-// O import para 'change_password_screen.dart' foi removido.
+import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final User user;
@@ -38,12 +36,12 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  void _loadAllEvents() async {
+  Future<void> _loadAllEvents() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
     try {
       final eventsData = await ApiService.getEvents(widget.user.id);
       final allEvents = eventsData.map((data) => Event.fromJson(data)).toList();
-
       final Map<DateTime, List<Event>> eventsMap = {};
       for (final event in allEvents) {
         final eventDate = DateTime.utc(event.dateTime.year, event.dateTime.month, event.dateTime.day);
@@ -52,11 +50,12 @@ class _HomeScreenState extends State<HomeScreen> {
         }
         eventsMap[eventDate]!.add(event);
       }
-
-      setState(() {
-        _eventsByDay = eventsMap;
-        _selectedEvents.value = _getEventsForDay(_selectedDay!);
-      });
+      if (mounted) {
+        setState(() {
+          _eventsByDay = eventsMap;
+          _selectedEvents.value = _getEventsForDay(_selectedDay!);
+        });
+      }
     } catch (e) {
       if(mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))));
@@ -84,19 +83,12 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _deleteEvent(String eventId) async {
     try {
       await ApiService.deleteEvent(eventId);
-      _loadAllEvents();
+      await _loadAllEvents();
     } catch (e) {
       if(mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))));
       }
     }
-  }
-
-  void _logout() {
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (context) => const LoginScreen()),
-      (route) => false,
-    );
   }
 
   @override
@@ -105,11 +97,16 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: Text('Olá, ${widget.user.name}'),
         actions: [
-          // ATUALIZAÇÃO: Apenas o botão de sair está presente.
           IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Sair',
-            onPressed: _logout,
+            icon: const Icon(Icons.settings),
+            tooltip: 'Configurações',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => SettingsScreen(user: widget.user),
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -189,7 +186,7 @@ class _HomeScreenState extends State<HomeScreen> {
           await Navigator.of(context).push(
             MaterialPageRoute(builder: (context) => AddEditEventScreen(userId: widget.user.id)),
           );
-          _loadAllEvents();
+          await _loadAllEvents();
         },
         child: const Icon(Icons.add),
       ),

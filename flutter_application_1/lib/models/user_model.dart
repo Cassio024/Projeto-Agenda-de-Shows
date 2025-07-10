@@ -3,10 +3,10 @@ class User {
   final String id;
   final String name;
   final String email;
+  // O campo 'role' foi removido
 
   User({required this.id, required this.name, required this.email});
 
-  // Construtor para criar um User a partir do JSON da API
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
       id: json['id'],
@@ -15,4 +15,3 @@ class User {
     );
   }
 }
-

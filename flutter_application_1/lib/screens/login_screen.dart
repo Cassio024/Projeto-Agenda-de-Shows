@@ -1,5 +1,4 @@
 // lib/screens/login_screen.dart
-
 import 'package:flutter/material.dart';
 import '../models/user_model.dart';
 import '../services/api_service.dart';
@@ -19,7 +18,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
-  bool _isPasswordVisible = false; // Estado para controlar a visibilidade da senha
 
   @override
   void dispose() {
@@ -81,30 +79,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   validator: (value) => value!.trim().isEmpty ? 'Por favor, insira o seu email' : null,
                 ),
                 const SizedBox(height: 16),
-                // ===== INÍCIO DA ALTERAÇÃO =====
                 TextFormField(
                   controller: _passwordController,
-                  obscureText: !_isPasswordVisible, // Usa o estado para esconder/mostrar
-                  decoration: InputDecoration(
-                    labelText: 'Senha',
-                    // Adiciona o ícone no final do campo
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        // Muda o ícone baseado na visibilidade
-                        _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                        color: Colors.white70,
-                      ),
-                      onPressed: () {
-                        // Inverte o estado da visibilidade ao clicar
-                        setState(() {
-                          _isPasswordVisible = !_isPasswordVisible;
-                        });
-                      },
-                    ),
-                  ),
+                  decoration: const InputDecoration(labelText: 'Senha'),
+                  obscureText: true,
                   validator: (value) => value!.isEmpty ? 'Por favor, insira a sua senha' : null,
                 ),
-                // ===== FIM DA ALTERAÇÃO =====
                 const SizedBox(height: 32),
                 ElevatedButton(
                   onPressed: _isLoading ? null : _login,
