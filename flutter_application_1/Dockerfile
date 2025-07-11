@@ -1,6 +1,6 @@
 # --- Etapa de Construção (Build Stage) ---
-# Usa uma imagem oficial que já tem o Flutter SDK
-FROM cirrusci/flutter:stable AS build
+# ATUALIZAÇÃO: Usa uma imagem do Docker mais recente com Flutter 3.x
+FROM leoafarias/flutter:3.19.6 AS build
 
 # Cria uma pasta para o aplicativo dentro do contentor
 WORKDIR /app
