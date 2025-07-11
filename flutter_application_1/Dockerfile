@@ -1,14 +1,25 @@
 # --- Etapa de Construção (Build Stage) ---
-# ATUALIZAÇÃO: Usa a imagem oficial e mais recente do Flutter
-FROM ghcr.io/cirrus-actions/flutter:stable AS build
+# Começa com uma imagem base do Linux (Ubuntu)
+FROM ubuntu:22.04 AS build
 
-# Cria uma pasta para o aplicativo dentro do contentor
+# Evita prompts interativos durante a instalação
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Instala as dependências necessárias (git, etc.)
+RUN apt-get update && apt-get install -y git curl unzip
+
+# Baixa e instala o Flutter SDK do zero
+RUN git clone https://github.com/flutter/flutter.git /usr/local/flutter
+ENV PATH="/usr/local/flutter/bin:/usr/local/flutter/bin/cache/dart-sdk/bin:${PATH}"
+
+# Executa o flutter doctor para garantir que tudo está instalado
+RUN flutter doctor
+
+# Define o diretório de trabalho
 WORKDIR /app
 
-# Copia os ficheiros de configuração. Copiar o .lock garante consistência.
+# Copia os ficheiros de configuração e baixa as dependências do Flutter
 COPY pubspec.yaml pubspec.lock ./
-
-# Baixa as dependências do Flutter
 RUN flutter pub get
 
 # Agora copia o resto do código do aplicativo
@@ -18,7 +29,7 @@ COPY . .
 RUN flutter build web --release
 
 # --- Etapa de Servidor (Serve Stage) ---
-# Agora, usamos uma imagem leve com um servidor web (nginx)
+# Usa uma imagem leve com um servidor web (nginx)
 FROM nginx:alpine
 
 # Copia os ficheiros da web que foram construídos na etapa anterior
