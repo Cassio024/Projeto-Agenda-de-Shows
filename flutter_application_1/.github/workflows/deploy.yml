@@ -44,3 +44,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           # Aponta para a pasta de build correta
           publish_dir: ./flutter_application_1/build/web
+        #2
