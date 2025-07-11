@@ -1,0 +1,50 @@
+name: Deploy Flutter Web to GitHub Pages
+
+# Aciona a ação sempre que houver um push para o ramo 'main'
+on:
+  push:
+    branches:
+      - main
+  # Permite que a ação seja executada manualmente a partir da aba Actions
+  workflow_dispatch:
+
+# Concede permissões para a ação poder criar o ramo gh-pages
+permissions:
+  contents: write
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+
+    # Define o diretório de trabalho para todos os comandos 'run'
+    defaults:
+      run:
+        working-directory: ./flutter_application_1
+
+    steps:
+      # 1. Obtém o código do seu repositório
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # 2. Configura o ambiente Flutter
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      # 3. Instala as dependências
+      - name: Install Dependencies
+        run: flutter pub get
+
+      # 4. Constrói a versão web
+      - name: Build Web
+        run: flutter build web --release --base-href /Projeto-Agenda-de-Shows/
+
+      # 5. Faz o deploy para o ramo 'gh-pages'
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # Aponta para a pasta de build correta
+          publish_dir: ./flutter_application_1/build/web
+          #a2
