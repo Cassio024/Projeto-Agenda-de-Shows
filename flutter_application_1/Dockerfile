@@ -1,19 +1,6 @@
 # --- Etapa de Construção (Build Stage) ---
-# Começa com uma imagem base do Linux (Ubuntu)
-FROM ubuntu:22.04 AS build
-
-# Evita prompts interativos durante a instalação
-ENV DEBIAN_FRONTEND=noninteractive
-
-# Instala as dependências necessárias (git, etc.)
-RUN apt-get update && apt-get install -y git curl unzip
-
-# Baixa e instala o Flutter SDK do zero
-RUN git clone https://github.com/flutter/flutter.git /usr/local/flutter
-ENV PATH="/usr/local/flutter/bin:/usr/local/flutter/bin/cache/dart-sdk/bin:${PATH}"
-
-# Executa o flutter doctor para garantir que tudo está instalado
-RUN flutter doctor
+# Usa uma imagem base do Linux que já vem com o Flutter SDK
+FROM ghcr.io/cirrus-actions/flutter:stable AS build
 
 # Define o diretório de trabalho
 WORKDIR /app
