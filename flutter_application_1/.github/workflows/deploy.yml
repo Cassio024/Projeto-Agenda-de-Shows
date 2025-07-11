@@ -16,15 +16,10 @@ jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
 
-    # Define o diretório de trabalho para todos os comandos 'run'
-    defaults:
-      run:
-        working-directory: ./flutter_application_1
-
     steps:
       # 1. Obtém o código do seu repositório
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       # 2. Configura o ambiente Flutter
       - name: Setup Flutter
@@ -45,5 +40,5 @@ jobs:
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          # Aponta para a pasta de build correta
-          publish_dir: ./flutter_application_1/build/web
+          # Aponta para a pasta de build correta na raiz
+          publish_dir: ./build/web
