@@ -6,6 +6,10 @@ on:
     branches:
       - main
 
+# ATUALIZAÇÃO CRUCIAL: Concede permissões de escrita à ação
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
