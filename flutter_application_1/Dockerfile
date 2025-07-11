@@ -2,18 +2,20 @@
 # Usa uma imagem oficial que já tem o Flutter SDK
 FROM cirrusci/flutter:stable AS build
 
-# Mostra a versão do Flutter para diagnóstico
-RUN flutter --version
-RUN flutter doctor
+# ATUALIZAÇÃO: Garante que o Flutter está na versão mais recente e limpa o cache
+# antes de qualquer outra operação.
+RUN flutter channel stable
+RUN flutter upgrade
+RUN flutter clean
 
 # Cria uma pasta para o aplicativo dentro do contentor
 WORKDIR /app
 
-# Copia os ficheiros de configuração primeiro para otimizar o cache
-COPY pubspec.yaml ./
+# Copia os ficheiros de configuração. Copiar o .lock garante consistência.
+COPY pubspec.yaml pubspec.lock ./
 
-# Tenta obter as dependências com mais detalhes em caso de erro
-RUN flutter pub get --verbose
+# Baixa as dependências do Flutter
+RUN flutter pub get
 
 # Agora copia o resto do código do aplicativo
 COPY . .
