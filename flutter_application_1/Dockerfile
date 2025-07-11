@@ -2,12 +2,6 @@
 # Usa uma imagem oficial que já tem o Flutter SDK
 FROM cirrusci/flutter:stable AS build
 
-# ATUALIZAÇÃO: Garante que o Flutter está na versão mais recente e limpa o cache
-# antes de qualquer outra operação.
-RUN flutter channel stable
-RUN flutter upgrade
-RUN flutter clean
-
 # Cria uma pasta para o aplicativo dentro do contentor
 WORKDIR /app
 
