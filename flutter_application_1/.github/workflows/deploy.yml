@@ -6,7 +6,7 @@ on:
     branches:
       - main
 
-# ATUALIZAÇÃO CRUCIAL: Concede permissões de escrita à ação
+# Concede permissões de escrita à ação
 permissions:
   contents: write
 
@@ -23,15 +23,24 @@ jobs:
         with:
           channel: 'stable'
 
-      # 3. Instala as dependências
-      - run: flutter pub get
+      # 3. CORREÇÃO IMPORTANTE: Entra na pasta do projeto Flutter
+      - name: Change to Flutter directory
+        run: cd flutter_application_1
 
-      # 4. Constrói a versão web, especificando o caminho base correto
-      - run: flutter build web --release --base-href /Projeto-Agenda-de-Shows/
+      # 4. Instala as dependências
+      - name: Install dependencies
+        run: flutter pub get
+        working-directory: ./flutter_application_1 # Executa o comando na pasta correta
 
-      # 5. Faz o deploy dos ficheiros construídos para o ramo 'gh-pages'
+      # 5. Constrói a versão web
+      - name: Build Web
+        run: flutter build web --release --base-href /Projeto-Agenda-de-Shows/
+        working-directory: ./flutter_application_1 # Executa o comando na pasta correta
+
+      # 6. Faz o deploy dos ficheiros construídos para o ramo 'gh-pages'
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build/web
+          # Aponta para a pasta de build correta
+          publish_dir: ./flutter_application_1/build/web
