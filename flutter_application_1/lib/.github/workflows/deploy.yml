@@ -1,0 +1,33 @@
+name: Deploy Flutter Web
+
+# Aciona a ação sempre que houver um push para o ramo 'main'
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Obtém o código do seu repositório
+      - uses: actions/checkout@v3
+
+      # 2. Configura o ambiente Flutter
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      # 3. Instala as dependências
+      - run: flutter pub get
+
+      # 4. Constrói a versão web, especificando o caminho base correto
+      - run: flutter build web --release --base-href /Projeto-Agenda-de-Shows/
+
+      # 5. Faz o deploy dos ficheiros construídos para o ramo 'gh-pages'
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build/web
