@@ -5,11 +5,11 @@ FROM cirrusci/flutter:stable AS build
 # Cria uma pasta para o aplicativo dentro do contentor
 WORKDIR /app
 
-# Copia os ficheiros de configuração primeiro para otimizar o cache
-COPY pubspec.yaml pubspec.lock ./
+# Copia apenas o pubspec.yaml para forçar a regeneração do .lock e evitar erros
+COPY pubspec.yaml ./
 RUN flutter pub get
 
-# Copia o resto do código do aplicativo
+# Agora copia o resto do código do aplicativo
 COPY . .
 
 # Constrói a versão web otimizada do aplicativo
