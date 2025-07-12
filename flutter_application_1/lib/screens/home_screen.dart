@@ -5,6 +5,7 @@ import '../models/user_model.dart';
 import '../models/event_model.dart';
 import '../services/api_service.dart';
 import 'add_edit_event_screen.dart';
+import 'event_detail_screen.dart';
 import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -98,6 +99,11 @@ class _HomeScreenState extends State<HomeScreen> {
         title: Text('Olá, ${widget.user.name}'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Atualizar',
+            onPressed: _loadAllEvents,
+          ),
+          IconButton(
             icon: const Icon(Icons.settings),
             tooltip: 'Configurações',
             onPressed: () {
@@ -170,7 +176,17 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: ListTile(
                                 title: Text(event.eventName, style: const TextStyle(fontWeight: FontWeight.bold)),
                                 subtitle: Text(event.venue),
-                                trailing: Text('${event.dateTime.hour.toString().padLeft(2, '0')}:${event.dateTime.minute.toString().padLeft(2, '0')}'),
+                                // A HORA FOI REMOVIDA DAQUI
+                                onTap: () async {
+                                  final result = await Navigator.of(context).push<bool>(
+                                    MaterialPageRoute(
+                                      builder: (context) => EventDetailScreen(event: event, userId: widget.user.id),
+                                    ),
+                                  );
+                                  if (result == true) {
+                                    _loadAllEvents();
+                                  }
+                                },
                               ),
                             ),
                           );
@@ -183,10 +199,10 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          await Navigator.of(context).push(
+          final result = await Navigator.of(context).push<bool>(
             MaterialPageRoute(builder: (context) => AddEditEventScreen(userId: widget.user.id)),
           );
-          await _loadAllEvents();
+          if (result == true) await _loadAllEvents();
         },
         child: const Icon(Icons.add),
       ),

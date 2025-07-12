@@ -1,29 +1,51 @@
 // lib/screens/add_edit_event_screen.dart
 import 'package:flutter/material.dart';
+import '../models/event_model.dart';
 import '../services/api_service.dart';
 
 class AddEditEventScreen extends StatefulWidget {
   final String userId;
-  const AddEditEventScreen({Key? key, required this.userId}) : super(key: key);
+  final Event? event;
+
+  const AddEditEventScreen({Key? key, required this.userId, this.event}) : super(key: key);
+
   @override
   State<AddEditEventScreen> createState() => _AddEditEventScreenState();
 }
 
 class _AddEditEventScreenState extends State<AddEditEventScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _eventNameController = TextEditingController();
-  final _venueController = TextEditingController();
+  late TextEditingController _eventNameController;
+  late TextEditingController _venueController;
+  late TextEditingController _valueController;
+  late TextEditingController _descriptionController;
   DateTime? _selectedDate;
+  String _selectedStatus = 'Confirmado';
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final isEditing = widget.event != null;
+    _eventNameController = TextEditingController(text: isEditing ? widget.event!.eventName : '');
+    _venueController = TextEditingController(text: isEditing ? widget.event!.venue : '');
+    _valueController = TextEditingController(text: isEditing ? widget.event!.value.toString() : '');
+    _descriptionController = TextEditingController(text: isEditing ? widget.event!.description : '');
+    _selectedDate = isEditing ? widget.event!.dateTime : DateTime.now();
+    _selectedStatus = isEditing ? widget.event!.status : 'Confirmado';
+  }
 
   @override
   void dispose() {
     _eventNameController.dispose();
     _venueController.dispose();
+    _valueController.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
 
-  Future<void> _pickDate(BuildContext context) async {
+  // FUNÇÃO ATUALIZADA: Não pede mais a hora
+  Future<void> _pickDate() async {
     final pickedDate = await showDatePicker(
       context: context,
       initialDate: _selectedDate ?? DateTime.now(),
@@ -31,41 +53,40 @@ class _AddEditEventScreenState extends State<AddEditEventScreen> {
       lastDate: DateTime(2101),
     );
     if (pickedDate != null) {
-      final pickedTime = await showTimePicker(
-        context: context,
-        initialTime: TimeOfDay.fromDateTime(_selectedDate ?? DateTime.now()),
-      );
-      if (pickedTime != null) {
-        setState(() {
-          _selectedDate = DateTime(
-            pickedDate.year,
-            pickedDate.month,
-            pickedDate.day,
-            pickedTime.hour,
-            pickedTime.minute,
-          );
-        });
-      }
+      setState(() {
+        // Guarda a data com a hora definida para o início do dia
+        _selectedDate = DateTime(pickedDate.year, pickedDate.month, pickedDate.day);
+      });
     }
   }
 
   Future<void> _saveEvent() async {
     if (_formKey.currentState!.validate()) {
-      if (_selectedDate == null) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Por favor, selecione uma data.')));
-        return;
-      }
       setState(() => _isLoading = true);
       try {
-        await ApiService.createEvent(
-          widget.userId,
-          _eventNameController.text,
-          _venueController.text,
-          _selectedDate!,
-        );
-        if (mounted) Navigator.of(context).pop();
+        if (widget.event == null) {
+          await ApiService.createEvent(
+            widget.userId,
+            _eventNameController.text,
+            _venueController.text,
+            _selectedDate!,
+            double.tryParse(_valueController.text) ?? 0.0,
+            _selectedStatus,
+            _descriptionController.text,
+          );
+        } else {
+          await ApiService.updateEvent(widget.event!.id, {
+            'eventName': _eventNameController.text,
+            'venue': _venueController.text,
+            'dateTime': _selectedDate!.toIso8601String(),
+            'value': double.tryParse(_valueController.text) ?? 0.0,
+            'status': _selectedStatus,
+            'description': _descriptionController.text,
+          });
+        }
+        if (mounted) Navigator.of(context).pop(true);
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))));
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
       } finally {
         if (mounted) setState(() => _isLoading = false);
       }
@@ -75,7 +96,7 @@ class _AddEditEventScreenState extends State<AddEditEventScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Adicionar Evento')),
+      appBar: AppBar(title: Text(widget.event == null ? 'Adicionar Evento' : 'Editar Evento')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -83,43 +104,30 @@ class _AddEditEventScreenState extends State<AddEditEventScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              TextFormField(
-                controller: _eventNameController,
-                decoration: const InputDecoration(labelText: 'Nome do Evento/Artista'),
-                validator: (value) => value!.isEmpty ? 'Por favor, insira um nome' : null,
-              ),
+              TextFormField(controller: _eventNameController, decoration: const InputDecoration(labelText: 'Nome do Evento'), validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null),
               const SizedBox(height: 16),
-              TextFormField(
-                controller: _venueController,
-                decoration: const InputDecoration(labelText: 'Local do Show'),
-                validator: (value) => value!.isEmpty ? 'Por favor, insira um local' : null,
+              TextFormField(controller: _venueController, decoration: const InputDecoration(labelText: 'Local'), validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null),
+              const SizedBox(height: 16),
+              TextFormField(controller: _valueController, decoration: const InputDecoration(labelText: 'Valor (R\$)', prefixText: 'R\$ '), keyboardType: TextInputType.number),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _selectedStatus,
+                decoration: const InputDecoration(labelText: 'Status'),
+                items: ['Confirmado', 'Adiado', 'Cancelado'].map((String value) => DropdownMenuItem<String>(value: value, child: Text(value))).toList(),
+                onChanged: (newValue) => setState(() => _selectedStatus = newValue!),
               ),
               const SizedBox(height: 16),
               InkWell(
-                onTap: () => _pickDate(context),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        _selectedDate == null ? 'Data e Hora do Evento' : '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year} às ${_selectedDate!.hour.toString().padLeft(2, '0')}:${_selectedDate!.minute.toString().padLeft(2, '0')}',
-                        style: TextStyle(fontSize: 16, color: _selectedDate == null ? Colors.white70 : Colors.white),
-                      ),
-                      const Icon(Icons.calendar_today, color: Colors.white70),
-                    ],
-                  ),
+                onTap: _pickDate,
+                child: InputDecorator(
+                  decoration: const InputDecoration(labelText: 'Data do Evento'),
+                  child: Text('${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'),
                 ),
               ),
+              const SizedBox(height: 16),
+              TextFormField(controller: _descriptionController, decoration: const InputDecoration(labelText: 'Descrição / Itens'), maxLines: 4),
               const SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: _isLoading ? null : _saveEvent,
-                child: _isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black)) : const Text('Salvar Evento'),
-              ),
+              ElevatedButton(onPressed: _isLoading ? null : _saveEvent, child: Text(widget.event == null ? 'Salvar Evento' : 'Atualizar Evento')),
             ],
           ),
         ),

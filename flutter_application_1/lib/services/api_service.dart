@@ -36,7 +36,7 @@ class ApiService {
       throw Exception(jsonDecode(response.body)['message'] ?? 'Falha no login');
     }
   }
-  
+
   static Future<Map<String, dynamic>> verifyIdentity(String email, DateTime birthDate) async {
     final response = await http.post(
       Uri.parse('$_baseUrl/users/verify-identity'),
@@ -80,7 +80,7 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> createEvent(String userId, String eventName, String venue, DateTime dateTime) async {
+  static Future<Map<String, dynamic>> createEvent(String userId, String eventName, String venue, DateTime dateTime, double value, String status, String description) async {
     final response = await http.post(
       Uri.parse('$_baseUrl/events'),
       headers: {'Content-Type': 'application/json'},
@@ -89,12 +89,28 @@ class ApiService {
         'eventName': eventName,
         'venue': venue,
         'dateTime': dateTime.toIso8601String(),
+        'value': value,
+        'status': status,
+        'description': description,
       }),
     );
     if (response.statusCode == 201) {
       return jsonDecode(response.body);
     } else {
       throw Exception('Falha ao criar evento');
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateEvent(String eventId, Map<String, dynamic> eventData) async {
+    final response = await http.put(
+      Uri.parse('$_baseUrl/events/$eventId'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(eventData),
+    );
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Falha ao atualizar evento');
     }
   }
 

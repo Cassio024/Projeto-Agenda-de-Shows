@@ -1,7 +1,7 @@
 // lib/screens/settings_screen.dart
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
-import '../services/api_service.dart';
 import 'login_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -13,82 +13,18 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  final _passwordController = TextEditingController();
+  
+  Future<void> _logout() async {
+    // Limpa os dados guardados
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('userData');
 
-  @override
-  void dispose() {
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _showDeleteConfirmationDialog() async {
-    _passwordController.clear();
-    final bool? shouldDelete = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Apagar Conta'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('Esta ação é permanente. Para confirmar, por favor, insira a sua senha.'),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(labelText: 'Senha'),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancelar'),
-            ),
-            TextButton(
-              onPressed: () {
-                if (_passwordController.text.isNotEmpty) {
-                  Navigator.of(context).pop(true);
-                }
-              },
-              child: const Text('Apagar', style: TextStyle(color: Colors.redAccent)),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (shouldDelete == true) {
-      _deleteAccount();
+    if (mounted) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+        (route) => false,
+      );
     }
-  }
-
-  Future<void> _deleteAccount() async {
-    try {
-      await ApiService.deleteOwnAccount(widget.user.id, _passwordController.text);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Conta apagada com sucesso.'), backgroundColor: Colors.green),
-        );
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
-          (route) => false,
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
-        );
-      }
-    }
-  }
-
-  void _logout() {
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (context) => const LoginScreen()),
-      (route) => false,
-    );
   }
 
   @override
@@ -111,14 +47,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onTap: _logout,
           ),
           const Divider(),
-          ListTile(
-            leading: const Icon(Icons.delete_forever, color: Colors.redAccent),
-            title: const Text('Apagar Minha Conta', style: TextStyle(color: Colors.redAccent)),
-            onTap: _showDeleteConfirmationDialog,
-          ),
-          const Divider(),
           const SizedBox(height: 20),
-          // ===== INÍCIO DA ALTERAÇÃO =====
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -130,13 +59,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Ciência da Computação - Sexto Período',
+                  'Ciência da Computação - 6° Período',
                   style: TextStyle(color: Colors.white54, fontSize: 12),
                 ),
               ],
             ),
           ),
-          // ===== FIM DA ALTERAÇÃO =====
         ],
       ),
     );

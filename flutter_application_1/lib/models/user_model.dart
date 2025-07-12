@@ -3,7 +3,6 @@ class User {
   final String id;
   final String name;
   final String email;
-  // O campo 'role' foi removido
 
   User({required this.id, required this.name, required this.email});
 

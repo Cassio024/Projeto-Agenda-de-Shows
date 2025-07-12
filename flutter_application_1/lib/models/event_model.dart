@@ -5,6 +5,9 @@ class Event {
   final String eventName;
   final String venue;
   final DateTime dateTime;
+  final double value;
+  final String status;
+  final String description;
 
   Event({
     required this.id,
@@ -12,16 +15,21 @@ class Event {
     required this.eventName,
     required this.venue,
     required this.dateTime,
+    this.value = 0.0,
+    this.status = 'Confirmado',
+    this.description = '',
   });
 
-  // Construtor para criar um Event a partir do JSON da API
   factory Event.fromJson(Map<String, dynamic> json) {
     return Event(
-      id: json['_id'], // MongoDB usa _id
+      id: json['_id'],
       userId: json['userId'],
       eventName: json['eventName'],
       venue: json['venue'],
       dateTime: DateTime.parse(json['dateTime']),
+      value: (json['value'] as num?)?.toDouble() ?? 0.0,
+      status: json['status'] ?? 'Confirmado',
+      description: json['description'] ?? '',
     );
   }
 }
